@@ -4,7 +4,6 @@ from typing import List
 
 import numpy as np
 
-
 # --- Day 1: Sonar Sweep ---
 # --- Part one ---
 
