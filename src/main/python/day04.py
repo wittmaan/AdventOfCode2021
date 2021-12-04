@@ -73,8 +73,7 @@ class Board:
     def fill(self, dat):
         matrix_rows = []
         for line in dat:
-            tmp = [int(_) for _ in line.split()]
-            matrix_rows.append(tmp)
+            matrix_rows.append([int(_) for _ in line.split()])
         matrix_cols = list(map(list, zip(*matrix_rows)))
 
         self.checker_rows = BoardChecker(matrix_rows)
