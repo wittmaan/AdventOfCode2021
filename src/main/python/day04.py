@@ -68,6 +68,7 @@ class Board:
         self.checker_rows = None
         self.checker_cols = None
         self.fill(dat)
+        self.is_winner = None
 
     def fill(self, dat):
         matrix_rows = []
@@ -81,8 +82,10 @@ class Board:
 
     def check(self, number_to_check: int):
         if self.checker_rows.run(number_to_check):
+            self.is_winner = True
             return self.checker_rows
         elif self.checker_cols.run(number_to_check):
+            self.is_winner = True
             return self.checker_cols
 
 
@@ -107,7 +110,7 @@ class BingoSubsystem:
                         self.boards.append(Board(board_buffer))
                         board_buffer = []
 
-    def check(self):
+    def check_first_winner(self):
         winner_found = False
         while True:
             number_to_check = self.numbers[:1][0]
@@ -124,12 +127,27 @@ class BingoSubsystem:
 
         return number_to_check * checker.sum_unmarked_numbers
 
+    def check_last_winner(self):
+        while True:
+            number_to_check = self.numbers[:1][0]
+            self.numbers = self.numbers[1:]
 
-assert BingoSubsystem(sample_input).check() == 4512
+            for board in self.boards:
+                checker: BoardChecker = board.check(number_to_check)
+
+            self.boards = [_ for _ in self.boards if not _.is_winner]
+
+            if not self.numbers or len(self.boards) == 0:
+                break
+
+        return number_to_check * checker.sum_unmarked_numbers
+
+
+assert BingoSubsystem(sample_input).check_first_winner() == 4512
 
 
 puzzle_input = [_.strip() for _ in fileinput.input()]
-solution_part1 = BingoSubsystem(puzzle_input).check()
+solution_part1 = BingoSubsystem(puzzle_input).check_first_winner()
 
 assert solution_part1 == 51034
 print(f"solution part1: {solution_part1}")
@@ -138,8 +156,8 @@ print(f"solution part1: {solution_part1}")
 # --- Part two ---
 
 
-# assert count_increases_extended(sample_input) == 5
-#
-# solution_part2 = count_increases_extended(puzzle_input)
-# assert solution_part2 == 1497
-# print(f"solution part2: {solution_part2}")
+assert BingoSubsystem(sample_input).check_last_winner() == 1924
+
+solution_part2 = BingoSubsystem(puzzle_input).check_last_winner()
+assert solution_part2 == 5434
+print(f"solution part2: {solution_part2}")
