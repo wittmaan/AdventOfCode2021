@@ -80,10 +80,10 @@ class Board:
         self.checker_cols = BoardChecker(matrix_cols)
 
     def check(self, number_to_check: int):
-        if self.checker_rows.run(number_to_check):
+        if self.checker_rows.simulate(number_to_check):
             self.is_winner = True
             return self.checker_rows
-        elif self.checker_cols.run(number_to_check):
+        elif self.checker_cols.simulate(number_to_check):
             self.is_winner = True
             return self.checker_cols
 
