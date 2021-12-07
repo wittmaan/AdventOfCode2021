@@ -1,4 +1,5 @@
 import fileinput
+from sys import maxsize
 
 # --- Day 7: The Treachery of Whales ---
 # --- Part one ---
@@ -18,7 +19,7 @@ def calc_minimal_fuel(dat: str, constant_rate: bool = True):
             fuels.append(fuel)
         minimal_fuel = min(fuels)
     else:
-        minimal_fuel = 1.0e08
+        minimal_fuel = maxsize
         for position1 in range(min(initial_positions), max(initial_positions)):
             result = [
                 ((diff * (diff + 1)) / 2)
