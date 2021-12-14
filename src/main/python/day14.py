@@ -59,12 +59,9 @@ class Polymerization:
             self.fast_grow()
 
     def fast_grow(self):
-        pairs_count = {
-            pair: self.polymer_template.count(pair) for pair in self.instructions
-        }
+        pairs_count = {_: self.polymer_template.count(_) for _ in self.instructions}
         counter = {
-            char: self.polymer_template.count(char)
-            for char in self.instructions.values()
+            _: self.polymer_template.count(_) for _ in self.instructions.values()
         }
         for i in range(40):
             for pair, value in pairs_count.copy().items():
