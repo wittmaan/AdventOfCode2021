@@ -1,8 +1,9 @@
 import fileinput
 from collections import deque, defaultdict
 from functools import reduce
+from math import hypot
 from operator import mul
-from typing import List, Deque
+from typing import List, Deque, Dict, Tuple
 
 # --- Day 19: Beacon Scanner ---
 # --- Part one ---
@@ -147,18 +148,131 @@ sample_input = """--- scanner 0 ---
 )
 
 
-def fill_scanner(dat: List[str]):
-    scanner = defaultdict(list)
-    count = None
-    for line in dat:
-        if "---" in line:
-            count = int(line.split()[2])
-        elif line.strip():
-            scanner[count].append(tuple([int(_) for _ in line.split(",")]))
-    return scanner
+class Beacon:
+    def __init__(self, x: int, y: int, z: int, beacon_id: int):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.id = beacon_id
+        self.relatives = {}
+
+    def align(self, other_beacon: "Beacon"):
+        dx = abs(self.x - other_beacon.x)
+        dy = abs(self.y - other_beacon.y)
+        dz = abs(self.z - other_beacon.z)
+        self.relatives[other_beacon.id] = other_beacon.relatives[self.id] = ",".join(
+            [str(_) for _ in [hypot(dx, dy, dz), max(dx, dy, dz), min(dx, dy, dz)]]
+        )
+
+    def compare(self, other_beacon: "Beacon"):
+        result = []
+        # print(f"self.relatives.keys() {self.relatives.keys()} - other_beacon.relatives {other_beacon.relatives.keys()}")
+        for k in self.relatives.keys():
+            if k in other_beacon.relatives:
+                result.append([other_beacon.relatives[k], self.relatives[k], k])
+        return result
 
 
-fill_scanner(sample_input)
+b1 = Beacon(1, 2, 3, 0)
+b2 = Beacon(4, 5, 6, 1)
+b3 = Beacon(7, 8, 9, 1)
+b1.align(b2)
+b1.align(b1)
+assert b1.compare(b2) == [["5.196152422706632,3,3", "0.0,0,0", 0]]
+assert b1.compare(b1) == [
+    ["5.196152422706632,3,3", "5.196152422706632,3,3", 1],
+    ["0.0,0,0", "0.0,0,0", 0],
+]
+
+
+class Scanner:
+    def __init__(self, scanner_id: int):
+        self.beacons = []
+        self.id = scanner_id
+        self.position = {"x": 0, "y": 0, "z": 0}
+
+    def add_beacon(self, x: int, y: int, z: int):
+        new_beacon = Beacon(x, y, z, beacon_id=len(self.beacons))
+        for beacon in self.beacons:
+            beacon.align(new_beacon)
+        self.beacons.append(new_beacon)
+
+    def compare(self, other_scanner: "Scanner"):
+        for other_scanner_beacon in other_scanner.beacons:
+            for self_scanner_beacon in self.beacons:
+                intersection = other_scanner_beacon.compare(self_scanner_beacon)
+                if len(intersection) >= 11:
+                    return other_scanner_beacon, self_scanner_beacon, intersection
+
+    def align(self, other_scanner: "Scanner", intersections):
+        for i in intersections:
+            print(i)
+
+
+class Solver:
+    def __init__(self, dat: List[str]):
+        self.scanners: List = Solver.fill(dat)
+
+    @staticmethod
+    def fill(dat):
+        scanners: List = []
+        scanner = None
+        for line in dat:
+            if "---" in line:
+                if scanner:
+                    scanners.append(scanner)
+                scanner = Scanner(scanner_id=int(line.split()[2]))
+            elif line.strip():
+                beacon_data = [int(_) for _ in line.split(",")]
+                scanner.add_beacon(x=beacon_data[0], y=beacon_data[1], z=beacon_data[2])
+        return scanners
+
+    def align(self):
+        locked = set()
+        while len(locked) < len(self.scanners):
+            for idx1, scanner1 in enumerate(self.scanners):
+                for idx2, scanner2 in enumerate(self.scanners):
+                    if idx1 == idx2:  # or idx1 not in locked or idx2 in locked:
+                        print(f"idx1 {idx1} idx2 {idx2} locked {locked}")
+                        continue
+
+                    intersection = scanner1.compare(scanner2)
+                    print(intersection)
+
+                    if not intersection:
+                        continue
+
+                    scanner1.align(scanner2, intersection)
+                    locked.add(idx2)
+
+
+solver = Solver(sample_input)
+solver.align()
+
+# class Scanner:
+#     def __init__(self, dat: List[str]):
+#         self.dat: Dict[list] = self.fill(dat)
+#
+#     @staticmethod
+#     def fill(dat):
+#         scanner = defaultdict(list)
+#         count = None
+#         for line in dat:
+#             if "---" in line:
+#                 count = int(line.split()[2])
+#             elif line.strip():
+#                 scanner[count].append(tuple([int(_) for _ in line.split(",")]))
+#         return scanner
+#
+#     def compare(self, other_scanner: "Scanner"):
+#         for other_values in other_scanner.dat.values():
+#             for self_values in self.dat.values():
+#                 intersection = other_values.compare(self_values)
+#
+#
+#
+# scanner = Scanner(sample_input)
+# print(scanner.dat)
 
 
 # puzzle_input = [_.strip() for _ in fileinput.input()][0]
@@ -175,3 +289,37 @@ fill_scanner(sample_input)
 #
 # assert solution_part2 == 1264485568252
 # print(f"solution part2: {solution_part2}")
+
+
+# def roll(v):
+#     return v[0], v[2], -v[1]
+#
+#
+# def turn(v):
+#     return -v[1], v[0], v[2]
+#
+#
+# def sequence(v):
+#     for cycle in range(2):
+#         for step in range(3):  # Yield RTTT 3 times
+#             v = roll(v)
+#             yield v  #    Yield R
+#             for i in range(3):  #    Yield TTT
+#                 v = turn(v)
+#                 yield v
+#         v = roll(turn(roll(v)))  # Do RTR
+#
+#
+# tmp = sequence((4, -5, 9))
+# print(tmp)
+#
+# count = 0
+# for i in sorted(tmp):
+#     count += 1
+#     print(f"count {count} {i}")
+
+
+# p = sequence((1, 1, 1))
+# q = sequence((-1, -1, 1))
+# for i in sorted(zip(p, q)):
+#     print(i)
